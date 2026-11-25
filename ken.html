@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tokyo Ghoul — Kaneki Awakening</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050611}
+canvas{display:block;width:100vw;height:100vh}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+(()=> {
+const c=document.getElementById('c'),g=c.getContext('2d');let w,h,dpr,t0=performance.now();
+const rain=Array.from({length:170},()=>({x:Math.random(),y:Math.random(),v:.25+Math.random()*.75,l:7+Math.random()*15}));
+const clamp=(x)=>Math.max(0,Math.min(1,x)),sm=(x)=>{x=clamp(x);return x*x*(3-2*x)};
+function resize(){dpr=Math.min(devicePixelRatio||1,2);w=innerWidth;h=innerHeight;c.width=w*dpr;c.height=h*dpr;g.setTransform(dpr,0,0,dpr,0,0)}addEventListener('resize',resize);resize();
+function text(s,x,y,size,color,align='center'){g.save();g.font=`${size}px Consolas, monospace`;g.textAlign=align;g.fillStyle=color;g.shadowColor=color;g.shadowBlur=10;g.fillText(s,x,y);g.restore()}
+function neonSign(x,y,bw,bh,top,bottom,color,sub){
+g.save();g.fillStyle=color+'12';g.fillRect(x,y,bw,bh);g.strokeStyle=color;g.lineWidth=1.3;g.shadowColor=color;g.shadowBlur=18;g.strokeRect(x,y,bw,bh);
+text(top,x+bw/2,y+bh*.42,bh*.19,color);text(bottom,x+bw/2,y+bh*.66,bh*.15,color);if(sub)text(sub,x+bw/2,y+bh*.86,bh*.075,color);g.restore()}
+function bg(t){
+g.fillStyle='#050611';g.fillRect(0,0,w,h);
+let grad=g.createRadialGradient(w*.5,h*.42,10,w*.5,h*.48,w*.75);grad.addColorStop(0,'#14172b');grad.addColorStop(1,'#03040a');g.fillStyle=grad;g.fillRect(0,0,w,h);
+const horizon=h*.49;
+for(let i=0;i<22;i++){let x=i*w/20-w*.025,bh=h*(.17+((i*37)%13)/45),bw=w/22;
+g.fillStyle='#090d1a';g.fillRect(x,horizon-bh,bw,bh);
+g.fillStyle='rgba(66,100,151,.22)';for(let yy=horizon-bh+8;yy<horizon-4;yy+=9)for(let xx=x+4;xx<x+bw-3;xx+=8)g.fillRect(xx,yy,2,3)}
+neonSign(w*.085,h*.29,w*.13,h*.20,'東京','GHOUL','#ff4f91','');
+neonSign(w*.78,h*.29,w*.12,h*.20,'喰種','夜','#5be0ff','20TH WARD');
+g.fillStyle='#0b0b18';g.fillRect(0,horizon,w,h-horizon);
+g.fillStyle='rgba(78,33,81,.16)';g.fillRect(0,horizon,w,h*.1);
+for(let i=0;i<16;i++){let yy=horizon+(h-horizon)*i/16;g.strokeStyle=`rgba(84,118,169,${.05+i*.008})`;g.beginPath();g.moveTo(0,yy);g.lineTo(w,yy);g.stroke()}
+g.strokeStyle='rgba(72,105,158,.28)';g.beginPath();g.moveTo(w*.5,horizon);g.lineTo(w*.03,h);g.moveTo(w*.5,horizon);g.lineTo(w*.97,h);g.stroke();
+for(let i=0;i<50;i++){let x=(i*131+t*8)%w,y=horizon+(i*47%(h-horizon));g.fillStyle='rgba(117,157,205,.25)';g.fillRect(x,y,9+(i%12),1)}
+rain.forEach(r=>{r.y+=r.v/60;if(r.y>1){r.y=-.1;r.x=Math.random()}g.strokeStyle='rgba(111,155,211,.35)';g.beginPath();g.moveTo(r.x*w,r.y*h);g.lineTo(r.x*w-4,r.y*h+r.l);g.stroke()});
+}
+function tentacle(side,index,t,attack,cx,backY){
+const phase=index*.8,rootX=cx+side*w*(.055+index%3*.014),rootY=backY+h*(.01+index%3*.018);
+const reach=w*(.23+(index%4)*.055),tipX=cx+side*(reach+attack*w*.09),tipY=h*(.13+(index%3)*.055+attack*.18);
+let pts=[];for(let j=0;j<=54;j++){let q=j/54;let bend=side*w*(.08+(index%3)*.025);
+pts.push({x:rootX+(tipX-rootX)*q+bend*Math.sin(q*Math.PI)+Math.sin(t*1.5+phase+q*4)*w*.012*q,
+y:rootY+(tipY-rootY)*q-h*.16*Math.sin(q*Math.PI)+Math.cos(t*1.3+phase+q*3)*h*.009*q})}
+g.save();g.lineCap='round';g.lineJoin='round';
+function stroke(color,width,blur){g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.strokeStyle=color;g.lineWidth=width;g.shadowColor='#ff174d';g.shadowBlur=blur;g.stroke()}
+stroke('#160714',15,3);stroke('#a50e35',9,13);stroke('#ff315f',3,16);stroke('#ff9ab8',1.2,7);
+for(let j=4;j<pts.length-4;j+=5){let p=pts[j],a=pts[j-1],dx=p.x-a.x,dy=p.y-a.y,L=Math.hypot(dx,dy)||1;let n=-dy/L;g.strokeStyle='rgba(255,65,112,.9)';g.lineWidth=2;g.beginPath();g.moveTo(p.x,p.y);g.lineTo(p.x+n*(10+attack*10),p.y+dx/L*(10+attack*10));g.stroke()}
+g.restore()}
+function figure(t){
+const awake=sm((t-2.2)/2),attack=sm((t-7)/1.2),cx=w*.5,cy=h*.56+Math.sin(t*2)*h*.004,scale=Math.min(w/1200,h/700);
+ // kagu-ne is behind the character, emerging from the shoulder blades
+for(let i=0;i<10;i++)tentacle(i%2?-1:1,i,t,attack,cx,cy-h*.12);
+g.save();g.translate(cx,cy);g.scale(scale,scale);
+// long slim coat, clear silhouette
+g.shadowColor='#8ca6d9';g.shadowBlur=10;
+g.fillStyle='#101725';g.strokeStyle='#63748e';g.lineWidth=1.5;
+g.beginPath();g.moveTo(-66,-12);g.lineTo(-110,38);g.lineTo(-91,230);g.lineTo(-55,218);g.lineTo(-23,68);g.lineTo(23,68);g.lineTo(55,218);g.lineTo(91,230);g.lineTo(110,38);g.lineTo(66,-12);g.closePath();g.fill();g.stroke();
+// coat folds
+g.strokeStyle='#52647f';g.lineWidth=2;g.beginPath();g.moveTo(-42,20);g.lineTo(-30,190);g.moveTo(42,20);g.lineTo(30,190);g.moveTo(0,58);g.lineTo(0,210);g.stroke();
+// neck and face
+g.fillStyle='#c9d2e1';g.fillRect(-17,-60,34,45);
+g.fillStyle='#dfe5ef';g.beginPath();g.moveTo(-48,-133);g.quadraticCurveTo(-57,-85,-35,-47);g.lineTo(0,-28);g.lineTo(35,-47);g.quadraticCurveTo(57,-85,48,-133);g.closePath();g.fill();
+// face shadow
+g.fillStyle='#8c9bb2';g.beginPath();g.moveTo(0,-127);g.lineTo(42,-111);g.lineTo(32,-63);g.lineTo(0,-35);g.closePath();g.fill();
+// hair mass with defined jagged spikes
+g.fillStyle='#eef4ff';g.strokeStyle='#aabbd2';g.lineWidth=1.4;g.beginPath();
+g.moveTo(-52,-104);g.lineTo(-78,-168);g.lineTo(-48,-151);g.lineTo(-57,-205);g.lineTo(-24,-166);g.lineTo(-14,-220);g.lineTo(8,-169);g.lineTo(42,-207);g.lineTo(34,-157);g.lineTo(75,-177);g.lineTo(51,-119);g.lineTo(47,-83);g.lineTo(24,-112);g.lineTo(8,-79);g.lineTo(-9,-117);g.lineTo(-28,-85);g.closePath();g.fill();g.stroke();
+// hair locks and face fringe
+g.fillStyle='#a9b8ce';g.beginPath();g.moveTo(-40,-153);g.lineTo(-18,-110);g.lineTo(-4,-156);g.lineTo(9,-105);g.lineTo(29,-151);g.lineTo(22,-177);g.closePath();g.fill();
+// eyes, red ghoul eye glow and normal dark eye
+g.fillStyle='#151a2a';g.fillRect(-30,-105,15,5);g.fillRect(17,-105,15,5);
+let pulse=.6+.4*(.5+.5*Math.sin(t*8));
+if(awake>.02){g.save();g.shadowColor='#ff002f';g.shadowBlur=35*pulse;g.fillStyle='#ff123f';g.beginPath();g.ellipse(24,-103,9,5,0,0,Math.PI*2);g.fill();g.fillStyle='#fff';g.fillRect(22,-105,3,3);g.restore()}
+// mouth and mask-like lower face contour
+g.strokeStyle='#55657c';g.lineWidth=1.4;g.beginPath();g.moveTo(-10,-72);g.lineTo(12,-72);g.stroke();
+// collar
+g.fillStyle='#e3eaf4';g.beginPath();g.moveTo(-28,-52);g.lineTo(-8,-15);g.lineTo(0,-42);g.lineTo(9,-15);g.lineTo(29,-52);g.lineTo(16,-60);g.lineTo(-16,-60);g.closePath();g.fill();
+g.restore();
+return attack}
+function overlay(t){
+const phases=[[.2,2.8,'I WAS JUST A HUMAN'],[3.1,5.4,'THE PAIN... CHANGED ME'],[5.8,8.4,'AWAKENING'],[8.7,12.8,'A GHOUL IS BORN']];
+for(const [a,b,s] of phases){let alpha=sm((t-a)/.3)*(1-sm((t-b)/.4));if(alpha){g.save();g.globalAlpha=alpha;text(s,w/2,h*.91,Math.max(13,w*.012),'#e5efff');g.restore()}}
+if(t>9.3&&t<10){let f=Math.sin((t-9.3)/.7*Math.PI);g.fillStyle=`rgba(255,10,50,${f*.13})`;g.fillRect(0,0,w,h)}
+}
+function loop(now){let t=(now-t0)/1000;bg(t);figure(t);overlay(t);requestAnimationFrame(loop)}requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
